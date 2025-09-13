@@ -1,0 +1,28 @@
+name: Manual Healthcheck
+
+on:
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull dev image
+        run: docker pull ghcr.io/rsdynamics/mariadb-backup:dev
+
+      - name: Simulate recent backup
+        run: echo "$(date -u)" > last_backup.txt
+
+      - name: Run healthcheck inside container
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/last_backup.txt:/var/log/last_backup.txt \
+            ghcr.io/rsdynamics/mariadb-backup:dev \
+            sh /usr/local/bin/healthcheck.sh

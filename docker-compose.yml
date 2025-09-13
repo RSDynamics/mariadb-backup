@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mariadb-backup:
+    build: .
+    container_name: mariadb-backup
+    environment:
+      - MODE=backup                # of restore / manual
+      - BACKUP_SCHEDULE=0 3 * * *  # elke dag om 03:00
+      - FULLBACKUPCYCLE_DAYS=7
+      - KEEP_FULL=3
+      - MYSQL_HOST=mariadb
+      - MYSQL_PORT=3306
+      - MYSQL_USER=BackupUsr
+      - MYSQL_PASSWORD=yourpassword
+      - BACKUP_DIR=/backup
+      - RESTORE_TARGET_DIR=/var/lib/mysql
+      - RESTORE_SOURCE=/var/lib/mysql-backup/inc_2025-09-15_03-00-00
+      - TZ=Europe/Amsterdam
+    volumes:
+      - data:/var/lib/mysql-backup
+    depends_on:
+      - mariadb
+    restart: unless-stopped

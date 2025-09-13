@@ -1,0 +1,35 @@
+# Ignore environment files
+.env
+.env.*
+
+# Ignore backup data
+/var/lib/mysql-backup/
+*.sql
+*.tar.gz
+
+# Ignore database files
+/data/mysql/
+
+# Ignore Docker artifacts
+*.log
+*.pid
+*.sock
+*.db
+*.db-journal
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.out
+
+# Ignore editor/project files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak

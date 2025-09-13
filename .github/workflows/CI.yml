@@ -1,0 +1,60 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  lint:
+    name: Shell Lint & Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+      - name: Bash Syntax Check
+        run: bash -n scripts/backup.sh scripts/restore.sh
+
+  build-dev:
+    name: Build Dev Image
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push dev image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Docker/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ghcr.io/rsdynamics/mariadb-backup:dev
+
+  healthcheck:
+    name: Healthcheck in Container
+    runs-on: ubuntu-latest
+    needs: build-dev
+    steps:
+      - name: Simulate recent backup
+        run: echo "$(date -u)" > last_backup.txt
+      - name: Run healthcheck inside container
+        run: |
+          docker run --rm \
+            --entrypoint "" \
+            -v ${{ github.workspace }}/last_backup.txt:/var/log/last_backup.txt \
+            ghcr.io/rsdynamics/mariadb-backup:dev \
+            sh /scripts/healthcheck.sh
